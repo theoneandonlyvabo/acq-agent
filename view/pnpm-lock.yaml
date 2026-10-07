@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@fontsource/inter':
+        specifier: ^5.3.0
+        version: 5.3.0
       react:
         specifier: ^19.2.8
         version: 19.3.0
@@ -38,6 +41,9 @@ importers:
         version: 8.3.3(@types/node@24.19.1)
 
 packages:
+
+  '@fontsource/inter@5.3.0':
+    resolution: {integrity: sha512-RofMylZmjlJEfELXeNHFWBRcSs75rGU/6bV2S2jfnvv/3rPXPGe0LgUJTklcHZ9lM4OZmAVFhcJPnACfb91A3g==}
 
   '@oxc-project/types@0.152.0':
     resolution: {integrity: sha512-oM/5rLBm2tPkg0iBgkH/FOeR3PCDpY19GTgAZjMFM8h9WI9VW7cLgzp6nwtarYKmovavIQZ+Fe/RKX/8C8O/Rw==}
@@ -491,6 +497,8 @@ packages:
         optional: true
 
 snapshots:
+
+  '@fontsource/inter@5.3.0': {}
 
   '@oxc-project/types@0.152.0': {}
 

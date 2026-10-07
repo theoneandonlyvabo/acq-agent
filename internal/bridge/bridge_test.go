@@ -21,6 +21,39 @@ import (
 	"acq-agent/internal/audit"
 )
 
+func TestProbe(t *testing.T) {
+	dir := t.TempDir()
+	log, auditPath := testLogger(t, dir)
+	defer func() { _ = log.Close() }()
+	b := New(log, "node-a", "127.0.0.1:50051", auditPath, "", "", "")
+	ts := httptest.NewServer(b.Handler())
+	defer ts.Close()
+
+	open, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = open.Close() }()
+	closed, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	closedAddr := closed.Addr().String()
+	_ = closed.Close()
+
+	var up map[string]any
+	getJSON(t, ts.URL+"/api/probe?addr="+open.Addr().String(), http.StatusOK, &up)
+	if up["online"] != true {
+		t.Fatalf("port terbuka harus online: %v", up)
+	}
+	var down map[string]any
+	getJSON(t, ts.URL+"/api/probe?addr="+closedAddr, http.StatusOK, &down)
+	if down["online"] != false {
+		t.Fatalf("port tertutup harus offline: %v", down)
+	}
+	getJSON(t, ts.URL+"/api/probe", http.StatusBadRequest, nil)
+}
+
 func TestLoopbackGuard(t *testing.T) {
 	for _, addr := range []string{"127.0.0.1:8080", "localhost:8080", "[::1]:8080"} {
 		if err := ensureLoopback(addr); err != nil {

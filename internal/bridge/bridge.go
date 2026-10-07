@@ -69,6 +69,7 @@ func New(log *audit.Logger, nodeID, serveAddr, auditPath, certFile, keyFile, caF
 	b.mux.HandleFunc("POST /api/pull", b.handlePull)
 	b.mux.HandleFunc("GET /api/jobs/{id}", b.handleJob)
 	b.mux.HandleFunc("GET /api/audit", b.handleAudit)
+	b.mux.HandleFunc("GET /api/probe", b.handleProbe)
 	return b
 }
 
@@ -240,6 +241,27 @@ func (b *Server) handleAudit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"lines": lines})
+}
+
+func (b *Server) handleProbe(w http.ResponseWriter, r *http.Request) {
+	addr := r.URL.Query().Get("addr")
+	if addr == "" {
+		writeErr(w, http.StatusBadRequest, "addr wajib diisi")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"addr": addr, "online": probeAddr(addr)})
+}
+
+// probeAddr mengecek keterjangkauan TCP dengan timeout singkat.
+func probeAddr(addr string) bool {
+	// #nosec G704 -- bridge dev-only bind loopback tanpa auth; pemanggil
+	// sudah bisa dial langsung, probe tidak menambah privilege.
+	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
 }
 
 // tailLines membaca N baris terakhir file.

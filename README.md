@@ -47,7 +47,7 @@ Isi `certs/` (CA, sertifikat, dan key) tidak di-commit ke repo.
 jangan ekspos ke jaringan.
 
 Endpoint: `GET /api/status`, `POST /api/pull`, `GET /api/jobs/:id`,
-`GET /api/audit?limit=`.
+`GET /api/audit?limit=`, `GET /api/probe?addr=` (cek keterjangkauan TCP node).
 
 ## Definisi selesai (checklist POC)
 
