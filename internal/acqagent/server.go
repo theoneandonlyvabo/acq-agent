@@ -9,7 +9,9 @@ import (
 	"os"
 	"strings"
 
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 
 	acqagentv1 "acq-agent/gen/proto/acqagent/v1"
 	"acq-agent/internal/audit"
@@ -22,6 +24,10 @@ const ChunkSize = 1 << 20
 type Server struct {
 	acqagentv1.UnimplementedAcqAgentServer
 	Log *audit.Logger
+	// NodeID adalah CommonName sertifikat server; kosong bila tanpa TLS.
+	NodeID string
+	// Allow membatasi pasangan penarik; nil berarti tanpa pembatasan (dev).
+	Allow *Allowlist
 }
 
 // rejectPhysicalPath menolak path device fisik; hanya file biasa yang boleh dibuka.
@@ -45,6 +51,18 @@ func (s *Server) Pull(req *acqagentv1.PullRequest, stream acqagentv1.AcqAgent_Pu
 		s.Log.Error("pull.failed", "jalur ditolak", map[string]any{"path": req.GetPath(), "peer": peerAddr, "err": err.Error()})
 		return err
 	}
+	if s.Allow != nil {
+		clientCN := ClientCNFromContext(stream.Context())
+		if clientCN == "" {
+			s.Log.Error("pull.failed", "identitas takdikenal", map[string]any{"path": req.GetPath(), "peer": peerAddr})
+			return status.Error(codes.PermissionDenied, "allowlist butuh koneksi mTLS")
+		}
+		if !s.Allow.Allows(s.NodeID, clientCN) {
+			s.Log.Error("pull.failed", "tidak diizinkan allowlist", map[string]any{"path": req.GetPath(), "peer": peerAddr, "client": clientCN})
+			return status.Errorf(codes.PermissionDenied, "pasangan %s dan %s tidak diizinkan", s.NodeID, clientCN)
+		}
+	}
+	// #nosec G304 -- path dari request sudah lolos tolak jalur device dan dibuka read-only.
 	f, err := os.Open(req.GetPath()) // selalu read-only di sisi sumber
 	if err != nil {
 		s.Log.Error("pull.failed", "gagal membuka sumber", map[string]any{"path": req.GetPath(), "peer": peerAddr, "err": err.Error()})

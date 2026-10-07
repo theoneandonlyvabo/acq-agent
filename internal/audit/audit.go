@@ -25,6 +25,7 @@ type Logger struct {
 
 // Open membuka (atau membuat) file log untuk penulisan tambahan.
 func Open(path string) (*Logger, error) {
+	// #nosec G304 -- path dari flag operator lokal, bukan dari jaringan.
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, err

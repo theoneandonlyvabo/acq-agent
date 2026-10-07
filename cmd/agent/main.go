@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net"
@@ -40,8 +41,8 @@ func main() {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "pakai: agent <serve|pull> [flag]")
-	fmt.Fprintln(os.Stderr, "  serve --addr :50051 --audit-log audit.log")
-	fmt.Fprintln(os.Stderr, "  pull --from 127.0.0.1:50051 --src file.dd --out hasil.dd --audit-log audit.log")
+	fmt.Fprintln(os.Stderr, "  serve --addr :50051 --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem --allowlist allow.json]")
+	fmt.Fprintln(os.Stderr, "  pull --from 127.0.0.1:50051 --src file.dd --out hasil.dd --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem]")
 }
 
 // runServe menjalankan node ini sebagai sumber yang melayani penarikan.
@@ -49,8 +50,37 @@ func runServe(args []string) error {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	addr := fs.String("addr", ":50051", "alamat listen, mis. :50051")
 	logPath := fs.String("audit-log", "audit.log", "path file audit log")
+	tlsCert := fs.String("tls-cert", "", "sertifikat node (wajib bersama tls-key dan tls-ca untuk mTLS)")
+	tlsKey := fs.String("tls-key", "", "kunci sertifikat node")
+	tlsCA := fs.String("tls-ca", "", "CA untuk verifikasi lawan")
+	allowPath := fs.String("allowlist", "", "file allowlist JSON (butuh mTLS)")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	var opts []grpc.ServerOption
+	nodeID := ""
+	var allow *acqagent.Allowlist
+	if *tlsCert != "" || *tlsKey != "" || *tlsCA != "" {
+		if *tlsCert == "" || *tlsKey == "" || *tlsCA == "" {
+			return fmt.Errorf("flag --tls-cert, --tls-key, dan --tls-ca harus diisi bersamaan")
+		}
+		var cn string
+		var err error
+		var opt grpc.ServerOption
+		if opt, cn, err = acqagent.ServerTLS(*tlsCert, *tlsKey, *tlsCA); err != nil {
+			return err
+		}
+		opts = append(opts, opt)
+		nodeID = cn
+	}
+	if *allowPath != "" {
+		if nodeID == "" {
+			return fmt.Errorf("flag --allowlist butuh mTLS (--tls-cert, --tls-key, --tls-ca)")
+		}
+		var err error
+		if allow, err = acqagent.LoadAllowlist(*allowPath); err != nil {
+			return err
+		}
 	}
 	log, err := audit.Open(*logPath)
 	if err != nil {
@@ -61,9 +91,9 @@ func runServe(args []string) error {
 	if err != nil {
 		return err
 	}
-	server := grpc.NewServer() // tanpa TLS; mTLS dikerjakan di Fase 4
-	acqagentv1.RegisterAcqAgentServer(server, &acqagent.Server{Log: log})
-	log.Info("serve.started", "node mendengarkan", map[string]any{"addr": listener.Addr().String()})
+	server := grpc.NewServer(opts...)
+	acqagentv1.RegisterAcqAgentServer(server, &acqagent.Server{Log: log, NodeID: nodeID, Allow: allow})
+	log.Info("serve.started", "node mendengarkan", map[string]any{"addr": listener.Addr().String(), "tls": nodeID != ""})
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	go func() {
@@ -80,6 +110,9 @@ func runPull(args []string) error {
 	src := fs.String("src", "", "path file image di sisi sumber")
 	out := fs.String("out", "", "path file hasil di sisi penarik")
 	logPath := fs.String("audit-log", "audit.log", "path file audit log")
+	tlsCert := fs.String("tls-cert", "", "sertifikat node (wajib bersama tls-key dan tls-ca untuk mTLS)")
+	tlsKey := fs.String("tls-key", "", "kunci sertifikat node")
+	tlsCA := fs.String("tls-ca", "", "CA untuk verifikasi server")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -87,12 +120,26 @@ func runPull(args []string) error {
 		fs.Usage()
 		return fmt.Errorf("flag --from, --src, dan --out wajib diisi")
 	}
+	var tlsCfg *tls.Config
+	if *tlsCert != "" || *tlsKey != "" || *tlsCA != "" {
+		if *tlsCert == "" || *tlsKey == "" || *tlsCA == "" {
+			return fmt.Errorf("flag --tls-cert, --tls-key, dan --tls-ca harus diisi bersamaan")
+		}
+		host := *from
+		if h, _, err := net.SplitHostPort(*from); err == nil {
+			host = h
+		}
+		var err error
+		if tlsCfg, err = acqagent.ClientTLS(*tlsCert, *tlsKey, *tlsCA, host); err != nil {
+			return err
+		}
+	}
 	log, err := audit.Open(*logPath)
 	if err != nil {
 		return err
 	}
 	defer log.Close()
-	res, err := acqagent.Pull(context.Background(), *from, *src, *out, log)
+	res, err := acqagent.Pull(context.Background(), *from, *src, *out, log, tlsCfg)
 	if err != nil {
 		return err
 	}
