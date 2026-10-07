@@ -40,6 +40,15 @@ go run ./cmd/agent pull --from 127.0.0.1:50051 --src testdata/disk01.dd --out /t
 
 Isi `certs/` (CA, sertifikat, dan key) tidak di-commit ke repo.
 
+## Visual layer (dev): HTTP bridge lokal
+
+`agent serve --http 127.0.0.1:8080` menyalakan bridge untuk view React
+(dev server Vite di `:5173`). Tanpa auth dan hanya bind loopback — dev only,
+jangan ekspos ke jaringan.
+
+Endpoint: `GET /api/status`, `POST /api/pull`, `GET /api/jobs/:id`,
+`GET /api/audit?limit=`.
+
 ## Definisi selesai (checklist POC)
 
 - Satu node menarik file image dari node lain satu arah (`pull`)

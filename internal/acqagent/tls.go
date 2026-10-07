@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"os"
 
 	"google.golang.org/grpc"
@@ -69,6 +70,14 @@ func loadCAPool(caFile string) (*x509.CertPool, error) {
 		return nil, fmt.Errorf("CA tidak valid: %s", caFile)
 	}
 	return pool, nil
+}
+
+// ServerNameOf mengambil host dari alamat host:port untuk verifikasi TLS.
+func ServerNameOf(addr string) string {
+	if host, _, err := net.SplitHostPort(addr); err == nil {
+		return host
+	}
+	return addr
 }
 
 // ClientCNFromContext mengambil CommonName client dari koneksi mTLS.

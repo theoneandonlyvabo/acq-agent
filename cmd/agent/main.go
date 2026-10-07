@@ -15,6 +15,7 @@ import (
 	acqagentv1 "acq-agent/gen/proto/acqagent/v1"
 	"acq-agent/internal/acqagent"
 	"acq-agent/internal/audit"
+	"acq-agent/internal/bridge"
 )
 
 func main() {
@@ -41,7 +42,7 @@ func main() {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "pakai: agent <serve|pull> [flag]")
-	fmt.Fprintln(os.Stderr, "  serve --addr :50051 --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem --allowlist allow.json]")
+	fmt.Fprintln(os.Stderr, "  serve --addr :50051 --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem --allowlist allow.json] [--http 127.0.0.1:8080]")
 	fmt.Fprintln(os.Stderr, "  pull --from 127.0.0.1:50051 --src file.dd --out hasil.dd --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem]")
 }
 
@@ -54,6 +55,7 @@ func runServe(args []string) error {
 	tlsKey := fs.String("tls-key", "", "kunci sertifikat node")
 	tlsCA := fs.String("tls-ca", "", "CA untuk verifikasi lawan")
 	allowPath := fs.String("allowlist", "", "file allowlist JSON (butuh mTLS)")
+	httpAddr := fs.String("http", "", "alamat HTTP bridge lokal, mis. 127.0.0.1:8080 (kosong = mati, dev only)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -91,11 +93,19 @@ func runServe(args []string) error {
 	if err != nil {
 		return err
 	}
-	server := grpc.NewServer(opts...)
-	acqagentv1.RegisterAcqAgentServer(server, &acqagent.Server{Log: log, NodeID: nodeID, Allow: allow})
-	log.Info("serve.started", "node mendengarkan", map[string]any{"addr": listener.Addr().String(), "tls": nodeID != ""})
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	if *httpAddr != "" {
+		httpSrv := bridge.New(log, nodeID, listener.Addr().String(), *logPath, *tlsCert, *tlsKey, *tlsCA)
+		go func() {
+			if err := httpSrv.Start(ctx, *httpAddr); err != nil {
+				fmt.Fprintln(os.Stderr, "bridge gagal:", err)
+			}
+		}()
+	}
+	server := grpc.NewServer(opts...)
+	acqagentv1.RegisterAcqAgentServer(server, &acqagent.Server{Log: log, NodeID: nodeID, Allow: allow})
+	log.Info("serve.started", "node mendengarkan", map[string]any{"addr": listener.Addr().String(), "tls": nodeID != "", "http": *httpAddr})
 	go func() {
 		<-ctx.Done()
 		server.GracefulStop()
@@ -125,12 +135,8 @@ func runPull(args []string) error {
 		if *tlsCert == "" || *tlsKey == "" || *tlsCA == "" {
 			return fmt.Errorf("flag --tls-cert, --tls-key, dan --tls-ca harus diisi bersamaan")
 		}
-		host := *from
-		if h, _, err := net.SplitHostPort(*from); err == nil {
-			host = h
-		}
 		var err error
-		if tlsCfg, err = acqagent.ClientTLS(*tlsCert, *tlsKey, *tlsCA, host); err != nil {
+		if tlsCfg, err = acqagent.ClientTLS(*tlsCert, *tlsKey, *tlsCA, acqagent.ServerNameOf(*from)); err != nil {
 			return err
 		}
 	}
@@ -139,7 +145,7 @@ func runPull(args []string) error {
 		return err
 	}
 	defer func() { _ = log.Close() }()
-	res, err := acqagent.Pull(context.Background(), *from, *src, *out, log, tlsCfg)
+	res, err := acqagent.Pull(context.Background(), *from, *src, *out, log, tlsCfg, nil)
 	if err != nil {
 		return err
 	}

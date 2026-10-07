@@ -27,7 +27,8 @@ type Result struct {
 // Pull menarik file dari node sumber, menyimpannya ke out, lalu memverifikasi
 // hash SHA-256 sisi penarik terhadap hash sisi sumber.
 // tlsCfg nil berarti plaintext (dev); isi untuk mTLS penuh.
-func Pull(ctx context.Context, addr, src, out string, log *audit.Logger, tlsCfg *tls.Config) (Result, error) {
+// onProgress dipanggil tiap ada byte tertulis; nil berarti tanpa laporan.
+func Pull(ctx context.Context, addr, src, out string, log *audit.Logger, tlsCfg *tls.Config, onProgress func(written uint64)) (Result, error) {
 	log.Info("pull.started", "penarikan dimulai", map[string]any{"from": addr, "src": src, "out": out})
 	var conn *grpc.ClientConn
 	var err error
@@ -79,6 +80,9 @@ func Pull(ctx context.Context, addr, src, out string, log *audit.Logger, tlsCfg 
 			}
 			sum.Write(m.GetData())
 			written += uint64(len(m.GetData()))
+			if onProgress != nil {
+				onProgress(written)
+			}
 		}
 		if m.GetSourceHash() != nil {
 			wantHash = m.GetSourceHash().GetSha256Hex()

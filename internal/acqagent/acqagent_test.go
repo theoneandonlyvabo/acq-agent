@@ -62,7 +62,7 @@ func TestPullRoundtrip(t *testing.T) {
 	defer srv.GracefulStop()
 
 	dst := filepath.Join(dir, "hasil.dd")
-	res, err := Pull(context.Background(), lis.Addr().String(), src, dst, log, nil)
+	res, err := Pull(context.Background(), lis.Addr().String(), src, dst, log, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +154,7 @@ func TestTLSAllowlist(t *testing.T) {
 		t.Fatal(err)
 	}
 	dst := filepath.Join(dir, "hasil.dd")
-	res, err := Pull(context.Background(), lis.Addr().String(), src, dst, log, tlsCfg)
+	res, err := Pull(context.Background(), lis.Addr().String(), src, dst, log, tlsCfg, nil)
 	if err != nil {
 		t.Fatalf("pasangan izin harus lolos: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestTLSAllowlist(t *testing.T) {
 	}
 
 	handler.Allow = &Allowlist{Pairs: [][2]string{{"node-a", "node-c"}}}
-	if _, err := Pull(context.Background(), lis.Addr().String(), src, dst, log, tlsCfg); err == nil {
+	if _, err := Pull(context.Background(), lis.Addr().String(), src, dst, log, tlsCfg, nil); err == nil {
 		t.Fatal("pasangan asing harus ditolak")
 	} else if !strings.Contains(err.Error(), "tidak diizinkan") {
 		t.Fatalf("pesan error salah: %v", err)
