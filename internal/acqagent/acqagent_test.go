@@ -180,3 +180,41 @@ func TestTLSAllowlist(t *testing.T) {
 		t.Fatal("audit log tidak memuat pull.failed")
 	}
 }
+
+// ServeDir membatasi file yang boleh disajikan; di luarnya ditolak.
+func TestServeDir(t *testing.T) {
+	serveDir := t.TempDir()
+	inside := filepath.Join(serveDir, "a.dd")
+	if err := os.WriteFile(inside, []byte("isi"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	outside := filepath.Join(t.TempDir(), "b.dd")
+	if err := os.WriteFile(outside, []byte("luar"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	log, err := audit.Open(filepath.Join(serveDir, "audit.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = log.Close() }()
+
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := grpc.NewServer()
+	acqagentv1.RegisterAcqAgentServer(srv, &Server{Log: log, ServeDir: serveDir})
+	go func() { _ = srv.Serve(lis) }()
+	defer srv.GracefulStop()
+
+	dst := filepath.Join(serveDir, "hasil.dd")
+	if _, err := Pull(context.Background(), lis.Addr().String(), inside, dst, log, nil, nil); err != nil {
+		t.Fatalf("di dalam serve-dir harus lolos: %v", err)
+	}
+	if _, err := Pull(context.Background(), lis.Addr().String(), outside, dst, log, nil, nil); err == nil {
+		t.Fatal("di luar serve-dir harus ditolak")
+	} else if !strings.Contains(err.Error(), "di luar direktori serve") {
+		t.Fatalf("pesan error salah: %v", err)
+	}
+}

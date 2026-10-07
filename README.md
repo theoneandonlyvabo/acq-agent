@@ -40,6 +40,12 @@ go run ./cmd/agent pull --from 127.0.0.1:50051 --src testdata/disk01.dd --out /t
 
 Isi `certs/` (CA, sertifikat, dan key) tidak di-commit ke repo.
 
+## Batasi direktori serve (aturan baca prod)
+
+`agent serve --serve-dir /evidence` hanya melayani file di bawah direktori itu;
+request di luar ditolak (`PermissionDenied`) dan tercatat di audit log.
+Tanpa flag = tanpa batas (dev saja).
+
 ## Visual layer (dev): HTTP bridge lokal
 
 `agent serve --http 127.0.0.1:8080` menyalakan bridge untuk view React

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -28,6 +29,33 @@ type Server struct {
 	NodeID string
 	// Allow membatasi pasangan penarik; nil berarti tanpa pembatasan (dev).
 	Allow *Allowlist
+	// ServeDir membatasi file yang boleh disajikan; kosong = tanpa batas (dev).
+	ServeDir string
+}
+
+// checkServeDir memastikan path berada di bawah ServeDir.
+// ServeDir kosong berarti tanpa pembatasan (dev).
+func (s *Server) checkServeDir(path string) error {
+	if s.ServeDir == "" {
+		return nil
+	}
+	dir, err := filepath.EvalSymlinks(s.ServeDir)
+	if err != nil {
+		return fmt.Errorf("direktori serve tidak valid: %s", s.ServeDir)
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	target, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		target = abs // file belum tentu ada; cek secara leksikal
+	}
+	rel, err := filepath.Rel(dir, target)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return status.Errorf(codes.PermissionDenied, "path di luar direktori serve: %s", path)
+	}
+	return nil
 }
 
 // rejectPhysicalPath menolak path device fisik; hanya file biasa yang boleh dibuka.
@@ -49,6 +77,10 @@ func (s *Server) Pull(req *acqagentv1.PullRequest, stream acqagentv1.AcqAgent_Pu
 	}
 	if err := rejectPhysicalPath(req.GetPath()); err != nil {
 		s.Log.Error("pull.failed", "jalur ditolak", map[string]any{"path": req.GetPath(), "peer": peerAddr, "err": err.Error()})
+		return err
+	}
+	if err := s.checkServeDir(req.GetPath()); err != nil {
+		s.Log.Error("pull.failed", "di luar direktori serve", map[string]any{"path": req.GetPath(), "peer": peerAddr, "err": err.Error()})
 		return err
 	}
 	if s.Allow != nil {

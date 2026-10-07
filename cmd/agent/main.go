@@ -42,7 +42,7 @@ func main() {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "pakai: agent <serve|pull> [flag]")
-	fmt.Fprintln(os.Stderr, "  serve --addr :50051 --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem --allowlist allow.json] [--http 127.0.0.1:8080]")
+	fmt.Fprintln(os.Stderr, "  serve --addr :50051 --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem --allowlist allow.json] [--serve-dir ./testdata] [--http 127.0.0.1:8080]")
 	fmt.Fprintln(os.Stderr, "  pull --from 127.0.0.1:50051 --src file.dd --out hasil.dd --audit-log audit.log [--tls-cert c.pem --tls-key k.pem --tls-ca ca.pem]")
 }
 
@@ -55,6 +55,7 @@ func runServe(args []string) error {
 	tlsKey := fs.String("tls-key", "", "kunci sertifikat node")
 	tlsCA := fs.String("tls-ca", "", "CA untuk verifikasi lawan")
 	allowPath := fs.String("allowlist", "", "file allowlist JSON (butuh mTLS)")
+	serveDir := fs.String("serve-dir", "", "batasi file yang disajikan ke direktori ini (kosong = tanpa batas, dev)")
 	httpAddr := fs.String("http", "", "alamat HTTP bridge lokal, mis. 127.0.0.1:8080 (kosong = mati, dev only)")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -89,6 +90,11 @@ func runServe(args []string) error {
 		return err
 	}
 	defer func() { _ = log.Close() }()
+	if *serveDir != "" {
+		if fi, err := os.Stat(*serveDir); err != nil || !fi.IsDir() {
+			return fmt.Errorf("flag --serve-dir bukan direktori valid: %s", *serveDir)
+		}
+	}
 	listener, err := net.Listen("tcp", *addr)
 	if err != nil {
 		return err
@@ -104,7 +110,7 @@ func runServe(args []string) error {
 		}()
 	}
 	server := grpc.NewServer(opts...)
-	acqagentv1.RegisterAcqAgentServer(server, &acqagent.Server{Log: log, NodeID: nodeID, Allow: allow})
+	acqagentv1.RegisterAcqAgentServer(server, &acqagent.Server{Log: log, NodeID: nodeID, Allow: allow, ServeDir: *serveDir})
 	log.Info("serve.started", "node mendengarkan", map[string]any{"addr": listener.Addr().String(), "tls": nodeID != "", "http": *httpAddr})
 	go func() {
 		<-ctx.Done()

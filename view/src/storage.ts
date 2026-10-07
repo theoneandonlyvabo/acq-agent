@@ -19,6 +19,17 @@ export function loadList(name: string): string[] {
   }
 }
 
+// removeEntry membuang satu nilai dari daftar.
+export function removeEntry(name: string, value: string): string[] {
+  const next = loadList(name).filter((v) => v !== value)
+  try {
+    localStorage.setItem(key(name), JSON.stringify(next))
+  } catch {
+    // Penyimpanan diblokir: hapus sekadar tidak tersimpan.
+  }
+  return next
+}
+
 // saveEntry menaruh nilai paling depan, unik, maksimal MAX_ENTRIES.
 export function saveEntry(name: string, value: string): string[] {
   const next = [value, ...loadList(name).filter((v) => v !== value)].slice(0, MAX_ENTRIES)
