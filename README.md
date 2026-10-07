@@ -39,3 +39,16 @@ go run ./cmd/agent pull --from 127.0.0.1:50051 --src testdata/disk01.dd --out /t
 ```
 
 Isi `certs/` (CA, sertifikat, dan key) tidak di-commit ke repo.
+
+## Definisi selesai (checklist POC)
+
+- Satu node menarik file image dari node lain satu arah (`pull`)
+- Hash SHA-256 kedua sisi cocok (diverifikasi otomatis; tidak cocok = gagal, file hasil dihapus)
+- Kejadian tercatat di audit log (satu baris JSON canonical per kejadian, di kedua sisi)
+
+## Keterbatasan
+
+- Tanpa flag `--tls-*` koneksi plaintext (dev saja); POC aman selalu pakai mTLS + `--allowlist`.
+- Guard path Windows (`\\.\`, `\\?\`) hanya teruji logikanya via unit test; tidak teruji di device Windows asli dari macOS.
+- Di luar scope dan tidak dikerjakan: resume koneksi putus, bad sector, kompresi, format E01, snapshot live system.
+- `certgen` hanya untuk latihan lokal, bukan PKI produksi.
