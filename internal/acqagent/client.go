@@ -40,7 +40,7 @@ func Pull(ctx context.Context, addr, src, out string, log *audit.Logger, tlsCfg 
 		log.Error("pull.failed", "gagal terhubung", map[string]any{"from": addr, "err": err.Error()})
 		return Result{}, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	stream, err := acqagentv1.NewAcqAgentClient(conn).Pull(ctx, &acqagentv1.PullRequest{Path: src})
 	if err != nil {

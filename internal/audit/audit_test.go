@@ -15,7 +15,7 @@ func TestSingleLineJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 	l.Info("uji.info", "halo", map[string]any{"b": 1})
 	l.Error("uji.gagal", "aduh", nil)
 
@@ -32,7 +32,7 @@ func TestSingleLineJSON(t *testing.T) {
 		idxLevel := strings.Index(line, `"level"`)
 		idxEvent := strings.Index(line, `"event"`)
 		idxMsg := strings.Index(line, `"msg"`)
-		if !(0 <= idxTS && idxTS < idxLevel && idxLevel < idxEvent && idxEvent < idxMsg) {
+		if idxTS < 0 || idxLevel <= idxTS || idxEvent <= idxLevel || idxMsg <= idxEvent {
 			t.Errorf("urutan kunci tidak canonical: %s", line)
 		}
 		var m map[string]any

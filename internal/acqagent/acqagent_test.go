@@ -50,7 +50,7 @@ func TestPullRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -58,7 +58,7 @@ func TestPullRoundtrip(t *testing.T) {
 	}
 	srv := grpc.NewServer()
 	acqagentv1.RegisterAcqAgentServer(srv, &Server{Log: log})
-	go srv.Serve(lis)
+	go func() { _ = srv.Serve(lis) }()
 	defer srv.GracefulStop()
 
 	dst := filepath.Join(dir, "hasil.dd")
@@ -126,7 +126,7 @@ func TestTLSAllowlist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 
 	opt, nodeID, err := ServerTLS(serverCertFile, serverKeyFile, caFile)
 	if err != nil {
@@ -146,7 +146,7 @@ func TestTLSAllowlist(t *testing.T) {
 	srv := grpc.NewServer(opt)
 	handler := &Server{Log: log, NodeID: nodeID, Allow: allow}
 	acqagentv1.RegisterAcqAgentServer(srv, handler)
-	go srv.Serve(lis)
+	go func() { _ = srv.Serve(lis) }()
 	defer srv.GracefulStop()
 
 	tlsCfg, err := ClientTLS(clientCertFile, clientKeyFile, caFile, "127.0.0.1")

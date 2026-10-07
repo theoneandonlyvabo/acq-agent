@@ -86,7 +86,7 @@ func runServe(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 	listener, err := net.Listen("tcp", *addr)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func runPull(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 	res, err := acqagent.Pull(context.Background(), *from, *src, *out, log, tlsCfg)
 	if err != nil {
 		return err

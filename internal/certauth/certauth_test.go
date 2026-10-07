@@ -22,6 +22,7 @@ func TestCAAndNode(t *testing.T) {
 	block, _ := pem.Decode(leafPEM)
 	if block == nil {
 		t.Fatal("gagal decode PEM sertifikat node")
+		return
 	}
 	leaf, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {

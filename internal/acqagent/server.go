@@ -68,7 +68,7 @@ func (s *Server) Pull(req *acqagentv1.PullRequest, stream acqagentv1.AcqAgent_Pu
 		s.Log.Error("pull.failed", "gagal membuka sumber", map[string]any{"path": req.GetPath(), "peer": peerAddr, "err": err.Error()})
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	s.Log.Info("pull.started", "penarikan dimulai", map[string]any{"path": req.GetPath(), "peer": peerAddr})
 
 	sum := sha256.New()
