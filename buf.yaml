@@ -1,0 +1,14 @@
+version: v1
+lint:
+  use:
+    - STANDARD
+  # Pengecualian sadar: nama service dan pesan chunk sudah dikunci di Fase 0
+  # (service Acquisition, streaming AcquireChunk) dan bukan penamaan standar.
+  except:
+    - SERVICE_SUFFIX
+    - RPC_RESPONSE_STANDARD_NAME
+  # Modul proto tinggal di proto/, jadi PACKAGE_DIRECTORY_MATCH dikecualikan
+  # khusus untuk file kontrak ini.
+  ignore_only:
+    PACKAGE_DIRECTORY_MATCH:
+      - proto/acq/v1/acquire.proto

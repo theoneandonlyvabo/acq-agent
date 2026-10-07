@@ -1,0 +1,37 @@
+// Kontrak gRPC untuk penarikan file image antar node (peer-to-peer).
+syntax = "proto3";
+
+package acq.v1;
+
+option go_package = "acq-agent/gen/proto/acq/v1;acqv1";
+
+// Layanan akuisisi: node penarik memanggil Acquire ke node sumber.
+service Acquisition {
+  // Mengalirkan isi file image dari sumber ke penarik.
+  // Chunk terakhir membawa hash SHA-256 sisi sumber untuk verifikasi.
+  rpc Acquire(AcquireRequest) returns (stream AcquireChunk);
+}
+
+// Permintaan penarikan satu file image.
+message AcquireRequest {
+  // Path file image di sisi sumber.
+  string path = 1;
+}
+
+// Satu potongan isi file, maksimal 1 MiB.
+message AcquireChunk {
+  // Isi chunk pada offset ini.
+  bytes data = 1;
+  // Offset byte awal chunk ini di dalam file.
+  uint64 offset = 2;
+  // Hanya diisi pada chunk terakhir: hash dan ukuran total sisi sumber.
+  SourceHash source_hash = 3;
+}
+
+// Ringkasan hash sisi sumber untuk verifikasi di sisi penarik.
+message SourceHash {
+  // SHA-256 hex dari seluruh file di sisi sumber.
+  string sha256_hex = 1;
+  // Ukuran total file dalam byte.
+  uint64 total_bytes = 2;
+}
