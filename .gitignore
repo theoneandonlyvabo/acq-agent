@@ -9,3 +9,6 @@
 
 # File audit log lokal hasil jalan dev/demo, jangan di-commit.
 *.log
+
+# File image palsu hasil generate lokal, jangan di-commit.
+testdata/*.dd

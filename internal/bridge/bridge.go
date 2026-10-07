@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -114,16 +115,33 @@ func ensureLoopback(addr string) error {
 }
 
 var devOrigins = map[string]bool{
-	"http://localhost:5173":   true,
-	"http://127.0.0.1:5173":   true,
-	"http://localhost:4173":   true,
-	"http://127.0.0.1:4173":   true,
+	"http://localhost:5173": true,
+	"http://127.0.0.1:5173": true,
+	"http://localhost:4173": true,
+	"http://127.0.0.1:4173": true,
+}
+
+// isDevOrigin menerima origin http loopback apa pun (port bebas).
+// Dev-only: vite bisa geser port bila :5173 terpakai; tetap loopback-only.
+func isDevOrigin(origin string) bool {
+	if devOrigins[origin] {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil || u.Scheme != "http" {
+		return false
+	}
+	switch u.Hostname() {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	}
+	return false
 }
 
 // withCORS membuka akses untuk dev server Vite lokal saja.
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if origin := r.Header.Get("Origin"); devOrigins[origin] {
+		if origin := r.Header.Get("Origin"); isDevOrigin(origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")

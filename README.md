@@ -9,11 +9,17 @@ AGENTS.md.
 
 ## Perintah
 
-- `make build` — kompilasi
-- `make test` — unit test
-- `make vet` — pemeriksaan statis
+- `make all` — bangun + semua cek (Go dan view)
+- `make demo` — demo transfer lokal ujung-ke-ujung
+- `make dev` — seed + serve + bridge + dev UI sekaligus (Ctrl+C berhenti)
+- `make dev-down` — matikan sisa dev + bersih
+- `make build`, `make test`, `make vet` — cek Go dasar
 - `make lint` — lint (butuh golangci-lint)
 - `make sec` — pindai keamanan (butuh gosec)
+- `make proto` — lint + generate kode gRPC (butuh buf)
+- `make view-build`, `make view-lint` — bangun dan lint view
+- `make clean` — hapus artefak generate lokal
+- `make help` — daftar perintah
 
 ## Disk palsu untuk uji lokal
 

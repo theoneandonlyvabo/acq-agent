@@ -209,3 +209,52 @@ func TestBridgePullE2E(t *testing.T) {
 		t.Fatal("audit log tidak memuat pull.completed")
 	}
 }
+
+// Origin http loopback (port berapa pun) boleh; sisanya ditolak.
+func TestCORSDevOrigins(t *testing.T) {
+	dir := t.TempDir()
+	log, auditPath := testLogger(t, dir)
+	defer func() { _ = log.Close() }()
+	b := New(log, "node-a", "127.0.0.1:50051", auditPath, "", "", "")
+	ts := httptest.NewServer(b.Handler())
+	defer ts.Close()
+
+	allowed := []string{
+		"http://localhost:5173",
+		"http://127.0.0.1:5174",
+		"http://localhost:9999",
+		"http://127.0.0.1:8080",
+		"http://[::1]:5173",
+	}
+	denied := []string{
+		"https://localhost:5173",
+		"https://127.0.0.1:5173",
+		"http://example.com",
+		"http://192.168.1.5:5173",
+		"",
+	}
+	check := func(origin string, want string) {
+		t.Helper()
+		req, err := http.NewRequest(http.MethodOptions, ts.URL+"/api/status", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if origin != "" {
+			req.Header.Set("Origin", origin)
+		}
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = res.Body.Close() }()
+		if got := res.Header.Get("Access-Control-Allow-Origin"); got != want {
+			t.Errorf("origin %q: header = %q, mau %q", origin, got, want)
+		}
+	}
+	for _, origin := range allowed {
+		check(origin, origin)
+	}
+	for _, origin := range denied {
+		check(origin, "")
+	}
+}

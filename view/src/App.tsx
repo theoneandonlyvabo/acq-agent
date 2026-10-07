@@ -38,6 +38,13 @@ export default function App() {
     loadAudit()
   }, [loadStatus, loadAudit])
 
+  // Selama bridge tak terjangkau, coba lagi tiap 3 detik; berhenti saat konek.
+  useEffect(() => {
+    if (statusError === null) return
+    const timer = setInterval(loadStatus, 3000)
+    return () => clearInterval(timer)
+  }, [statusError, loadStatus])
+
   const jobId = job?.id ?? null
   const jobState = job?.state ?? null
   useEffect(() => {
