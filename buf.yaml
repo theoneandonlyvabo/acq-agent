@@ -2,8 +2,8 @@ version: v1
 lint:
   use:
     - STANDARD
-  # Pengecualian sadar: nama service dan pesan chunk sudah dikunci di Fase 0
-  # (service Acquisition, streaming AcquireChunk) dan bukan penamaan standar.
+  # Pengecualian sadar: nama service dan pesan chunk sudah dikunci
+  # (service AcqAgent, streaming PullChunk) dan bukan penamaan standar.
   except:
     - SERVICE_SUFFIX
     - RPC_RESPONSE_STANDARD_NAME
@@ -11,4 +11,4 @@ lint:
   # khusus untuk file kontrak ini.
   ignore_only:
     PACKAGE_DIRECTORY_MATCH:
-      - proto/acq/v1/acquire.proto
+      - proto/acqagent/v1/pull.proto

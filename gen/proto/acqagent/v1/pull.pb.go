@@ -4,9 +4,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        (unknown)
-// source: proto/acq/v1/acquire.proto
+// source: proto/acqagent/v1/pull.proto
 
-package acqv1
+package acqagentv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -24,7 +24,7 @@ const (
 )
 
 // Permintaan penarikan satu file image.
-type AcquireRequest struct {
+type PullRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Path file image di sisi sumber.
 	Path          string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
@@ -32,21 +32,21 @@ type AcquireRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AcquireRequest) Reset() {
-	*x = AcquireRequest{}
-	mi := &file_proto_acq_v1_acquire_proto_msgTypes[0]
+func (x *PullRequest) Reset() {
+	*x = PullRequest{}
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AcquireRequest) String() string {
+func (x *PullRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AcquireRequest) ProtoMessage() {}
+func (*PullRequest) ProtoMessage() {}
 
-func (x *AcquireRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_acq_v1_acquire_proto_msgTypes[0]
+func (x *PullRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,12 +57,12 @@ func (x *AcquireRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AcquireRequest.ProtoReflect.Descriptor instead.
-func (*AcquireRequest) Descriptor() ([]byte, []int) {
-	return file_proto_acq_v1_acquire_proto_rawDescGZIP(), []int{0}
+// Deprecated: Use PullRequest.ProtoReflect.Descriptor instead.
+func (*PullRequest) Descriptor() ([]byte, []int) {
+	return file_proto_acqagent_v1_pull_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AcquireRequest) GetPath() string {
+func (x *PullRequest) GetPath() string {
 	if x != nil {
 		return x.Path
 	}
@@ -70,7 +70,7 @@ func (x *AcquireRequest) GetPath() string {
 }
 
 // Satu potongan isi file, maksimal 1 MiB.
-type AcquireChunk struct {
+type PullChunk struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Isi chunk pada offset ini.
 	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
@@ -82,21 +82,21 @@ type AcquireChunk struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AcquireChunk) Reset() {
-	*x = AcquireChunk{}
-	mi := &file_proto_acq_v1_acquire_proto_msgTypes[1]
+func (x *PullChunk) Reset() {
+	*x = PullChunk{}
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AcquireChunk) String() string {
+func (x *PullChunk) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AcquireChunk) ProtoMessage() {}
+func (*PullChunk) ProtoMessage() {}
 
-func (x *AcquireChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_acq_v1_acquire_proto_msgTypes[1]
+func (x *PullChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -107,26 +107,26 @@ func (x *AcquireChunk) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AcquireChunk.ProtoReflect.Descriptor instead.
-func (*AcquireChunk) Descriptor() ([]byte, []int) {
-	return file_proto_acq_v1_acquire_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use PullChunk.ProtoReflect.Descriptor instead.
+func (*PullChunk) Descriptor() ([]byte, []int) {
+	return file_proto_acqagent_v1_pull_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *AcquireChunk) GetData() []byte {
+func (x *PullChunk) GetData() []byte {
 	if x != nil {
 		return x.Data
 	}
 	return nil
 }
 
-func (x *AcquireChunk) GetOffset() uint64 {
+func (x *PullChunk) GetOffset() uint64 {
 	if x != nil {
 		return x.Offset
 	}
 	return 0
 }
 
-func (x *AcquireChunk) GetSourceHash() *SourceHash {
+func (x *PullChunk) GetSourceHash() *SourceHash {
 	if x != nil {
 		return x.SourceHash
 	}
@@ -146,7 +146,7 @@ type SourceHash struct {
 
 func (x *SourceHash) Reset() {
 	*x = SourceHash{}
-	mi := &file_proto_acq_v1_acquire_proto_msgTypes[2]
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -158,7 +158,7 @@ func (x *SourceHash) String() string {
 func (*SourceHash) ProtoMessage() {}
 
 func (x *SourceHash) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_acq_v1_acquire_proto_msgTypes[2]
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -171,7 +171,7 @@ func (x *SourceHash) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SourceHash.ProtoReflect.Descriptor instead.
 func (*SourceHash) Descriptor() ([]byte, []int) {
-	return file_proto_acq_v1_acquire_proto_rawDescGZIP(), []int{2}
+	return file_proto_acqagent_v1_pull_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SourceHash) GetSha256Hex() string {
@@ -188,49 +188,49 @@ func (x *SourceHash) GetTotalBytes() uint64 {
 	return 0
 }
 
-var File_proto_acq_v1_acquire_proto protoreflect.FileDescriptor
+var File_proto_acqagent_v1_pull_proto protoreflect.FileDescriptor
 
-const file_proto_acq_v1_acquire_proto_rawDesc = "" +
+const file_proto_acqagent_v1_pull_proto_rawDesc = "" +
 	"\n" +
-	"\x1aproto/acq/v1/acquire.proto\x12\x06acq.v1\"$\n" +
-	"\x0eAcquireRequest\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"o\n" +
-	"\fAcquireChunk\x12\x12\n" +
+	"\x1cproto/acqagent/v1/pull.proto\x12\vacqagent.v1\"!\n" +
+	"\vPullRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"q\n" +
+	"\tPullChunk\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x16\n" +
-	"\x06offset\x18\x02 \x01(\x04R\x06offset\x123\n" +
-	"\vsource_hash\x18\x03 \x01(\v2\x12.acq.v1.SourceHashR\n" +
+	"\x06offset\x18\x02 \x01(\x04R\x06offset\x128\n" +
+	"\vsource_hash\x18\x03 \x01(\v2\x17.acqagent.v1.SourceHashR\n" +
 	"sourceHash\"L\n" +
 	"\n" +
 	"SourceHash\x12\x1d\n" +
 	"\n" +
 	"sha256_hex\x18\x01 \x01(\tR\tsha256Hex\x12\x1f\n" +
 	"\vtotal_bytes\x18\x02 \x01(\x04R\n" +
-	"totalBytes2H\n" +
-	"\vAcquisition\x129\n" +
-	"\aAcquire\x12\x16.acq.v1.AcquireRequest\x1a\x14.acq.v1.AcquireChunk0\x01B\"Z acq-agent/gen/proto/acq/v1;acqv1b\x06proto3"
+	"totalBytes2F\n" +
+	"\bAcqAgent\x12:\n" +
+	"\x04Pull\x12\x18.acqagent.v1.PullRequest\x1a\x16.acqagent.v1.PullChunk0\x01B,Z*acq-agent/gen/proto/acqagent/v1;acqagentv1b\x06proto3"
 
 var (
-	file_proto_acq_v1_acquire_proto_rawDescOnce sync.Once
-	file_proto_acq_v1_acquire_proto_rawDescData []byte
+	file_proto_acqagent_v1_pull_proto_rawDescOnce sync.Once
+	file_proto_acqagent_v1_pull_proto_rawDescData []byte
 )
 
-func file_proto_acq_v1_acquire_proto_rawDescGZIP() []byte {
-	file_proto_acq_v1_acquire_proto_rawDescOnce.Do(func() {
-		file_proto_acq_v1_acquire_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_acq_v1_acquire_proto_rawDesc), len(file_proto_acq_v1_acquire_proto_rawDesc)))
+func file_proto_acqagent_v1_pull_proto_rawDescGZIP() []byte {
+	file_proto_acqagent_v1_pull_proto_rawDescOnce.Do(func() {
+		file_proto_acqagent_v1_pull_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_acqagent_v1_pull_proto_rawDesc), len(file_proto_acqagent_v1_pull_proto_rawDesc)))
 	})
-	return file_proto_acq_v1_acquire_proto_rawDescData
+	return file_proto_acqagent_v1_pull_proto_rawDescData
 }
 
-var file_proto_acq_v1_acquire_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_proto_acq_v1_acquire_proto_goTypes = []any{
-	(*AcquireRequest)(nil), // 0: acq.v1.AcquireRequest
-	(*AcquireChunk)(nil),   // 1: acq.v1.AcquireChunk
-	(*SourceHash)(nil),     // 2: acq.v1.SourceHash
+var file_proto_acqagent_v1_pull_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_acqagent_v1_pull_proto_goTypes = []any{
+	(*PullRequest)(nil), // 0: acqagent.v1.PullRequest
+	(*PullChunk)(nil),   // 1: acqagent.v1.PullChunk
+	(*SourceHash)(nil),  // 2: acqagent.v1.SourceHash
 }
-var file_proto_acq_v1_acquire_proto_depIdxs = []int32{
-	2, // 0: acq.v1.AcquireChunk.source_hash:type_name -> acq.v1.SourceHash
-	0, // 1: acq.v1.Acquisition.Acquire:input_type -> acq.v1.AcquireRequest
-	1, // 2: acq.v1.Acquisition.Acquire:output_type -> acq.v1.AcquireChunk
+var file_proto_acqagent_v1_pull_proto_depIdxs = []int32{
+	2, // 0: acqagent.v1.PullChunk.source_hash:type_name -> acqagent.v1.SourceHash
+	0, // 1: acqagent.v1.AcqAgent.Pull:input_type -> acqagent.v1.PullRequest
+	1, // 2: acqagent.v1.AcqAgent.Pull:output_type -> acqagent.v1.PullChunk
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -238,26 +238,26 @@ var file_proto_acq_v1_acquire_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_proto_acq_v1_acquire_proto_init() }
-func file_proto_acq_v1_acquire_proto_init() {
-	if File_proto_acq_v1_acquire_proto != nil {
+func init() { file_proto_acqagent_v1_pull_proto_init() }
+func file_proto_acqagent_v1_pull_proto_init() {
+	if File_proto_acqagent_v1_pull_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_acq_v1_acquire_proto_rawDesc), len(file_proto_acq_v1_acquire_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_acqagent_v1_pull_proto_rawDesc), len(file_proto_acqagent_v1_pull_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_proto_acq_v1_acquire_proto_goTypes,
-		DependencyIndexes: file_proto_acq_v1_acquire_proto_depIdxs,
-		MessageInfos:      file_proto_acq_v1_acquire_proto_msgTypes,
+		GoTypes:           file_proto_acqagent_v1_pull_proto_goTypes,
+		DependencyIndexes: file_proto_acqagent_v1_pull_proto_depIdxs,
+		MessageInfos:      file_proto_acqagent_v1_pull_proto_msgTypes,
 	}.Build()
-	File_proto_acq_v1_acquire_proto = out.File
-	file_proto_acq_v1_acquire_proto_goTypes = nil
-	file_proto_acq_v1_acquire_proto_depIdxs = nil
+	File_proto_acqagent_v1_pull_proto = out.File
+	file_proto_acqagent_v1_pull_proto_goTypes = nil
+	file_proto_acqagent_v1_pull_proto_depIdxs = nil
 }
