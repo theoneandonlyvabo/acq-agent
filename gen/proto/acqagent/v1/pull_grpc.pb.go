@@ -21,7 +21,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AcqAgent_Pull_FullMethodName = "/acqagent.v1.AcqAgent/Pull"
+	AcqAgent_Pull_FullMethodName    = "/acqagent.v1.AcqAgent/Pull"
+	AcqAgent_Preview_FullMethodName = "/acqagent.v1.AcqAgent/Preview"
 )
 
 // AcqAgentClient is the client API for AcqAgent service.
@@ -33,6 +34,9 @@ type AcqAgentClient interface {
 	// Mengalirkan isi file image dari sumber ke penarik.
 	// Chunk terakhir membawa hash SHA-256 sisi sumber untuk verifikasi.
 	Pull(ctx context.Context, in *PullRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PullChunk], error)
+	// Mengintip sebagian isi file tanpa menarik seluruhnya (read-only).
+	// Dibatasi 64 KiB per panggilan; ikut guard yang sama dengan Pull.
+	Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error)
 }
 
 type acqAgentClient struct {
@@ -62,6 +66,16 @@ func (c *acqAgentClient) Pull(ctx context.Context, in *PullRequest, opts ...grpc
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AcqAgent_PullClient = grpc.ServerStreamingClient[PullChunk]
 
+func (c *acqAgentClient) Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PreviewResponse)
+	err := c.cc.Invoke(ctx, AcqAgent_Preview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AcqAgentServer is the server API for AcqAgent service.
 // All implementations must embed UnimplementedAcqAgentServer
 // for forward compatibility.
@@ -71,6 +85,9 @@ type AcqAgentServer interface {
 	// Mengalirkan isi file image dari sumber ke penarik.
 	// Chunk terakhir membawa hash SHA-256 sisi sumber untuk verifikasi.
 	Pull(*PullRequest, grpc.ServerStreamingServer[PullChunk]) error
+	// Mengintip sebagian isi file tanpa menarik seluruhnya (read-only).
+	// Dibatasi 64 KiB per panggilan; ikut guard yang sama dengan Pull.
+	Preview(context.Context, *PreviewRequest) (*PreviewResponse, error)
 	mustEmbedUnimplementedAcqAgentServer()
 }
 
@@ -83,6 +100,9 @@ type UnimplementedAcqAgentServer struct{}
 
 func (UnimplementedAcqAgentServer) Pull(*PullRequest, grpc.ServerStreamingServer[PullChunk]) error {
 	return status.Error(codes.Unimplemented, "method Pull not implemented")
+}
+func (UnimplementedAcqAgentServer) Preview(context.Context, *PreviewRequest) (*PreviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Preview not implemented")
 }
 func (UnimplementedAcqAgentServer) mustEmbedUnimplementedAcqAgentServer() {}
 func (UnimplementedAcqAgentServer) testEmbeddedByValue()                  {}
@@ -116,13 +136,36 @@ func _AcqAgent_Pull_Handler(srv interface{}, stream grpc.ServerStream) error {
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AcqAgent_PullServer = grpc.ServerStreamingServer[PullChunk]
 
+func _AcqAgent_Preview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PreviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AcqAgentServer).Preview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AcqAgent_Preview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AcqAgentServer).Preview(ctx, req.(*PreviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AcqAgent_ServiceDesc is the grpc.ServiceDesc for AcqAgent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AcqAgent_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "acqagent.v1.AcqAgent",
 	HandlerType: (*AcqAgentServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Preview",
+			Handler:    _AcqAgent_Preview_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Pull",

@@ -6,7 +6,7 @@
 GOBIN := $(shell go env GOPATH)/bin
 export PATH := $(GOBIN):$(PATH)
 
-.PHONY: all build vet test lint sec proto view-install view-build view-lint demo dev dev-down clean help
+.PHONY: all build vet test lint sec proto seed view-install view-build view-lint demo dev dev-down clean help
 
 all: proto build vet test lint sec view-build view-lint
 
@@ -28,6 +28,11 @@ sec:
 proto:
 	$(GOBIN)/buf lint
 	$(GOBIN)/buf generate
+
+seed:
+	./scripts/ghostdisk.sh testdata/disk-a.dd 4 "ACQAGENT-TEST-DISK-A"
+	./scripts/ghostdisk.sh testdata/disk-b.dd 8 "ACQAGENT-TEST-DISK-B"
+	./scripts/ghostdisk.sh testdata/disk-c.dd 1 "ACQAGENT-TEST-DISK-C"
 
 view-install:
 	cd view && pnpm install
@@ -71,5 +76,6 @@ help:
 	@echo "make dev-down       matikan sisa dev + bersih"
 	@echo "make build/vet/test/lint/sec   cek Go"
 	@echo "make proto        lint + generate kode gRPC"
+	@echo "make seed         tiga disk uji berlabel di testdata/"
 	@echo "make view-install/view-build/view-lint   perintah view"
 	@echo "make clean        hapus artefak generate lokal"

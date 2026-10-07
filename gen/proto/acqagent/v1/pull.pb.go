@@ -188,6 +188,134 @@ func (x *SourceHash) GetTotalBytes() uint64 {
 	return 0
 }
 
+// Permintaan intip sebagian isi file.
+type PreviewRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Path file image di sisi sumber.
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// Offset byte awal.
+	Offset uint64 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Jumlah byte diminta; 0 = default 4096, maks 65536.
+	Limit         uint32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewRequest) Reset() {
+	*x = PreviewRequest{}
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewRequest) ProtoMessage() {}
+
+func (x *PreviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewRequest.ProtoReflect.Descriptor instead.
+func (*PreviewRequest) Descriptor() ([]byte, []int) {
+	return file_proto_acqagent_v1_pull_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PreviewRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *PreviewRequest) GetOffset() uint64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *PreviewRequest) GetLimit() uint32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+// Potongan isi file untuk pratinjau.
+type PreviewResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Offset byte awal data ini (gema request).
+	Offset uint64 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Isi potongan (bisa lebih pendek dari limit di ujung file).
+	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	// Ukuran total file dalam byte.
+	TotalBytes    uint64 `protobuf:"varint,3,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewResponse) Reset() {
+	*x = PreviewResponse{}
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewResponse) ProtoMessage() {}
+
+func (x *PreviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_acqagent_v1_pull_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewResponse.ProtoReflect.Descriptor instead.
+func (*PreviewResponse) Descriptor() ([]byte, []int) {
+	return file_proto_acqagent_v1_pull_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PreviewResponse) GetOffset() uint64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *PreviewResponse) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *PreviewResponse) GetTotalBytes() uint64 {
+	if x != nil {
+		return x.TotalBytes
+	}
+	return 0
+}
+
 var File_proto_acqagent_v1_pull_proto protoreflect.FileDescriptor
 
 const file_proto_acqagent_v1_pull_proto_rawDesc = "" +
@@ -205,9 +333,19 @@ const file_proto_acqagent_v1_pull_proto_rawDesc = "" +
 	"\n" +
 	"sha256_hex\x18\x01 \x01(\tR\tsha256Hex\x12\x1f\n" +
 	"\vtotal_bytes\x18\x02 \x01(\x04R\n" +
-	"totalBytes2F\n" +
+	"totalBytes\"R\n" +
+	"\x0ePreviewRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\rR\x05limit\"^\n" +
+	"\x0fPreviewResponse\x12\x16\n" +
+	"\x06offset\x18\x01 \x01(\x04R\x06offset\x12\x12\n" +
+	"\x04data\x18\x02 \x01(\fR\x04data\x12\x1f\n" +
+	"\vtotal_bytes\x18\x03 \x01(\x04R\n" +
+	"totalBytes2\x8c\x01\n" +
 	"\bAcqAgent\x12:\n" +
-	"\x04Pull\x12\x18.acqagent.v1.PullRequest\x1a\x16.acqagent.v1.PullChunk0\x01B,Z*acq-agent/gen/proto/acqagent/v1;acqagentv1b\x06proto3"
+	"\x04Pull\x12\x18.acqagent.v1.PullRequest\x1a\x16.acqagent.v1.PullChunk0\x01\x12D\n" +
+	"\aPreview\x12\x1b.acqagent.v1.PreviewRequest\x1a\x1c.acqagent.v1.PreviewResponseB,Z*acq-agent/gen/proto/acqagent/v1;acqagentv1b\x06proto3"
 
 var (
 	file_proto_acqagent_v1_pull_proto_rawDescOnce sync.Once
@@ -221,18 +359,22 @@ func file_proto_acqagent_v1_pull_proto_rawDescGZIP() []byte {
 	return file_proto_acqagent_v1_pull_proto_rawDescData
 }
 
-var file_proto_acqagent_v1_pull_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_acqagent_v1_pull_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_acqagent_v1_pull_proto_goTypes = []any{
-	(*PullRequest)(nil), // 0: acqagent.v1.PullRequest
-	(*PullChunk)(nil),   // 1: acqagent.v1.PullChunk
-	(*SourceHash)(nil),  // 2: acqagent.v1.SourceHash
+	(*PullRequest)(nil),     // 0: acqagent.v1.PullRequest
+	(*PullChunk)(nil),       // 1: acqagent.v1.PullChunk
+	(*SourceHash)(nil),      // 2: acqagent.v1.SourceHash
+	(*PreviewRequest)(nil),  // 3: acqagent.v1.PreviewRequest
+	(*PreviewResponse)(nil), // 4: acqagent.v1.PreviewResponse
 }
 var file_proto_acqagent_v1_pull_proto_depIdxs = []int32{
 	2, // 0: acqagent.v1.PullChunk.source_hash:type_name -> acqagent.v1.SourceHash
 	0, // 1: acqagent.v1.AcqAgent.Pull:input_type -> acqagent.v1.PullRequest
-	1, // 2: acqagent.v1.AcqAgent.Pull:output_type -> acqagent.v1.PullChunk
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
+	3, // 2: acqagent.v1.AcqAgent.Preview:input_type -> acqagent.v1.PreviewRequest
+	1, // 3: acqagent.v1.AcqAgent.Pull:output_type -> acqagent.v1.PullChunk
+	4, // 4: acqagent.v1.AcqAgent.Preview:output_type -> acqagent.v1.PreviewResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -249,7 +391,7 @@ func file_proto_acqagent_v1_pull_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_acqagent_v1_pull_proto_rawDesc), len(file_proto_acqagent_v1_pull_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

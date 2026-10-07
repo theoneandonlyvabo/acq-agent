@@ -3,6 +3,7 @@ package bridge
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"net"
@@ -257,4 +258,48 @@ func TestCORSDevOrigins(t *testing.T) {
 	for _, origin := range denied {
 		check(origin, "")
 	}
+}
+
+// Preview via bridge: data cocok + total benar + path asing 403.
+func TestPreviewEndpoint(t *testing.T) {
+	dir := t.TempDir()
+	data := []byte("ACQAGENT-TEST-DISK-Y-0123456789")
+	src := filepath.Join(dir, "sumber.dd")
+	if err := os.WriteFile(src, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	log, auditPath := testLogger(t, dir)
+	defer func() { _ = log.Close() }()
+
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := grpc.NewServer()
+	acqagentv1.RegisterAcqAgentServer(srv, &acqagent.Server{Log: log, ServeDir: dir})
+	go func() { _ = srv.Serve(lis) }()
+	defer srv.GracefulStop()
+
+	b := New(log, "node-a", lis.Addr().String(), auditPath, "", "", "")
+	ts := httptest.NewServer(b.Handler())
+	defer ts.Close()
+
+	var res struct {
+		Offset     uint64 `json:"offset"`
+		TotalBytes uint64 `json:"total_bytes"`
+		DataBase64 string `json:"data_base64"`
+	}
+	getJSON(t, ts.URL+"/api/preview?from="+lis.Addr().String()+"&path="+src+"&offset=9&limit=4", http.StatusOK, &res)
+	if res.Offset != 9 || res.TotalBytes != uint64(len(data)) {
+		t.Fatalf("preview salah: %+v", res)
+	}
+	raw, err := base64.StdEncoding.DecodeString(res.DataBase64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != "TEST" {
+		t.Fatalf("isi salah: %q", raw)
+	}
+	getJSON(t, ts.URL+"/api/preview?from="+lis.Addr().String()+"&path=/dev/sda", http.StatusForbidden, nil)
+	getJSON(t, ts.URL+"/api/preview?from=&path="+src, http.StatusBadRequest, nil)
 }

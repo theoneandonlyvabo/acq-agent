@@ -2,6 +2,7 @@
 // File hasil = basename path sumber, tampil read-only.
 import { useEffect, useState, type FormEvent } from 'react'
 import NodeGrid, { type NodeState } from './NodeGrid'
+import HexModal from './HexModal'
 import { loadList, removeEntry, saveEntry } from '../storage'
 import { probeEndpoints } from '../api'
 
@@ -32,6 +33,7 @@ export default function PullForm({ busy, serverError, onStart }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [states, setStates] = useState<Record<string, NodeState>>({})
   const [nonce, setNonce] = useState(0)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     if (endpoints.length === 0) return
@@ -47,6 +49,8 @@ export default function PullForm({ busy, serverError, onStart }: Props) {
 
   const effectiveSrc = addingPath ? customPath : selectedPath
   const outName = basename(effectiveSrc)
+  const effectiveFrom = (addingNew ? custom : selected).trim()
+  const canPreview = effectiveFrom !== '' && effectiveSrc.trim() !== '' && !busy
 
   function pickPath(value: string) {
     if (value === NEW_SENTINEL) {
@@ -159,10 +163,18 @@ export default function PullForm({ busy, serverError, onStart }: Props) {
             {message}
           </p>
         )}
-        <button type="submit" className="btn btn-primary pull-submit" disabled={busy}>
-          {busy ? 'Menarik…' : 'Mulai Penarikan'}
-        </button>
+        <div className="form-actions">
+          <button type="button" className="btn btn-secondary" disabled={!canPreview} onClick={() => setPreviewOpen(true)}>
+            Pratinjau isi
+          </button>
+          <button type="submit" className="btn btn-primary pull-submit" disabled={busy}>
+            {busy ? 'Menarik…' : 'Mulai Penarikan'}
+          </button>
+        </div>
       </form>
+      {previewOpen && (
+        <HexModal from={effectiveFrom} path={effectiveSrc.trim()} onClose={() => setPreviewOpen(false)} />
+      )}
     </section>
   )
 }

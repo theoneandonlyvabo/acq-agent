@@ -181,6 +181,49 @@ func TestTLSAllowlist(t *testing.T) {
 	}
 }
 
+// Preview mengembalikan potongan tepat + total; guard ikut berlaku.
+func TestPreview(t *testing.T) {
+	dir := t.TempDir()
+	data := []byte("ACQAGENT-TEST-DISK-X-0123456789")
+	src := filepath.Join(dir, "sumber.dd")
+	if err := os.WriteFile(src, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	log, err := audit.Open(filepath.Join(dir, "audit.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = log.Close() }()
+
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := grpc.NewServer()
+	acqagentv1.RegisterAcqAgentServer(srv, &Server{Log: log, ServeDir: dir})
+	go func() { _ = srv.Serve(lis) }()
+	defer srv.GracefulStop()
+
+	ctx := context.Background()
+	res, err := Preview(ctx, lis.Addr().String(), src, 9, 4, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.GetOffset() != 9 || string(res.GetData()) != "TEST" || res.GetTotalBytes() != uint64(len(data)) {
+		t.Fatalf("preview salah: %+v", res)
+	}
+	if _, err := Preview(ctx, lis.Addr().String(), src, 0, 1<<20, nil); err != nil {
+		t.Fatal(err)
+	} // limit diclamp, bukan error
+	if _, err := Preview(ctx, lis.Addr().String(), "/dev/sda", 0, 8, nil); err == nil {
+		t.Fatal("device harus ditolak")
+	}
+	luar := filepath.Join(t.TempDir(), "luar.dd")
+	if _, err := Preview(ctx, lis.Addr().String(), luar, 0, 8, nil); err == nil {
+		t.Fatal("di luar serve-dir harus ditolak")
+	}
+}
+
 // ServeDir membatasi file yang boleh disajikan; di luarnya ditolak.
 func TestServeDir(t *testing.T) {
 	serveDir := t.TempDir()

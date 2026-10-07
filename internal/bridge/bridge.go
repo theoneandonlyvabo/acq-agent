@@ -5,6 +5,7 @@ package bridge
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -16,6 +17,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"acq-agent/internal/acqagent"
 	"acq-agent/internal/audit"
@@ -71,6 +75,7 @@ func New(log *audit.Logger, nodeID, serveAddr, auditPath, certFile, keyFile, caF
 	b.mux.HandleFunc("GET /api/jobs/{id}", b.handleJob)
 	b.mux.HandleFunc("GET /api/audit", b.handleAudit)
 	b.mux.HandleFunc("GET /api/probe", b.handleProbe)
+	b.mux.HandleFunc("GET /api/preview", b.handlePreview)
 	return b
 }
 
@@ -206,14 +211,10 @@ func (b *Server) run(ctx context.Context, job *Job) {
 		job.Error = msg
 		b.mu.Unlock()
 	}
-	var tlsCfg *tls.Config
-	if b.certFile != "" {
-		var err error
-		tlsCfg, err = acqagent.ClientTLS(b.certFile, b.keyFile, b.caFile, acqagent.ServerNameOf(job.From))
-		if err != nil {
-			fail(err.Error())
-			return
-		}
+	tlsCfg, err := b.clientTLSFor(job.From)
+	if err != nil {
+		fail(err.Error())
+		return
 	}
 	res, err := acqagent.Pull(ctx, job.From, job.Src, job.Out, b.log, tlsCfg, func(written uint64) {
 		b.mu.Lock()
@@ -261,6 +262,15 @@ func (b *Server) handleAudit(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"lines": lines})
 }
 
+// clientTLSFor membangun kredensial client untuk alamat tujuan;
+// nil berarti plaintext (dev).
+func (b *Server) clientTLSFor(from string) (*tls.Config, error) {
+	if b.certFile == "" {
+		return nil, nil
+	}
+	return acqagent.ClientTLS(b.certFile, b.keyFile, b.caFile, acqagent.ServerNameOf(from))
+}
+
 func (b *Server) handleProbe(w http.ResponseWriter, r *http.Request) {
 	addr := r.URL.Query().Get("addr")
 	if addr == "" {
@@ -280,6 +290,60 @@ func probeAddr(addr string) bool {
 	}
 	_ = conn.Close()
 	return true
+}
+
+func (b *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	from, path := q.Get("from"), q.Get("path")
+	if from == "" || path == "" {
+		writeErr(w, http.StatusBadRequest, "from dan path wajib diisi")
+		return
+	}
+	var offset uint64
+	if s := q.Get("offset"); s != "" {
+		n, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "offset harus angka")
+			return
+		}
+		offset = n
+	}
+	limit := uint32(4096)
+	if s := q.Get("limit"); s != "" {
+		n, err := strconv.Atoi(s)
+		if err != nil || n < 1 || n > 65536 {
+			writeErr(w, http.StatusBadRequest, "limit harus 1 sampai 65536")
+			return
+		}
+		limit = uint32(n)
+	}
+	tlsCfg, err := b.clientTLSFor(from)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "gagal memuat TLS")
+		return
+	}
+	resp, err := acqagent.Preview(r.Context(), from, path, offset, limit, tlsCfg)
+	if err != nil {
+		writeErr(w, grpcToHTTP(err), err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"offset":      resp.GetOffset(),
+		"total_bytes": resp.GetTotalBytes(),
+		"data_base64": base64.StdEncoding.EncodeToString(resp.GetData()),
+	})
+}
+
+// grpcToHTTP memetakan galat gRPC ke status HTTP untuk UI.
+func grpcToHTTP(err error) int {
+	switch status.Code(err) {
+	case codes.NotFound:
+		return http.StatusNotFound
+	case codes.PermissionDenied:
+		return http.StatusForbidden
+	default:
+		return http.StatusBadGateway
+	}
 }
 
 // tailLines membaca N baris terakhir file.

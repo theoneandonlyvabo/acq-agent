@@ -279,6 +279,97 @@ body {
   width: 100%;
 }
 
+/* Baris aksi form: pratinjau secukupnya, submit mengisi sisa */
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.form-actions .pull-submit {
+  flex: 1;
+  width: auto;
+}
+
+/* Modal pratinjau heksadesimal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: rgba(26, 29, 33, 0.45);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.35);
+}
+
+.dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: 20px 20px var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.dialog-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 var(--space-1);
+}
+
+.dialog-path {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dialog-body {
+  padding: var(--space-4) 20px;
+  overflow-y: auto;
+  min-height: 120px;
+}
+
+.dialog-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 20px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.dialog-pos {
+  color: var(--text-muted);
+}
+
+.hex-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 130px;
+  gap: var(--space-4);
+  padding: 1px 0;
+  white-space: nowrap;
+}
+
+.hex-off {
+  color: var(--text-muted);
+}
+
+.hex-ascii {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .btn-secondary {
   background: var(--panel);
   border-color: var(--border-strong);

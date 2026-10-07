@@ -82,3 +82,20 @@ export function friendlyError(raw: string): string {
   }
   return raw
 }
+
+export interface PreviewResponse {
+  offset: number
+  total_bytes: number
+  data_base64: string
+}
+
+// previewSource mengintip sebagian isi file di node sumber via bridge.
+export async function previewSource(from: string, path: string, offset: number, limit: number): Promise<PreviewResponse> {
+  const q = `from=${encodeURIComponent(from)}&path=${encodeURIComponent(path)}&offset=${offset}&limit=${limit}`
+  const res = await fetch(`${BRIDGE_URL}/api/preview?${q}`)
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error ?? `HTTP ${res.status}`)
+  }
+  return (await res.json()) as PreviewResponse
+}

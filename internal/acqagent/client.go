@@ -18,6 +18,23 @@ import (
 	"acq-agent/internal/audit"
 )
 
+// Preview mengambil sebagian isi file dari node sumber tanpa menarik
+// seluruhnya. tlsCfg nil berarti plaintext (dev).
+func Preview(ctx context.Context, addr, path string, offset uint64, limit uint32, tlsCfg *tls.Config) (*acqagentv1.PreviewResponse, error) {
+	var conn *grpc.ClientConn
+	var err error
+	if tlsCfg != nil {
+		conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
+	} else {
+		conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+	return acqagentv1.NewAcqAgentClient(conn).Preview(ctx, &acqagentv1.PreviewRequest{Path: path, Offset: offset, Limit: limit})
+}
+
 // Result adalah ringkasan penarikan yang sudah terverifikasi hash-nya.
 type Result struct {
 	Bytes  uint64

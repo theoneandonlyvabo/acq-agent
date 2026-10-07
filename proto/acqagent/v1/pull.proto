@@ -10,6 +10,9 @@ service AcqAgent {
   // Mengalirkan isi file image dari sumber ke penarik.
   // Chunk terakhir membawa hash SHA-256 sisi sumber untuk verifikasi.
   rpc Pull(PullRequest) returns (stream PullChunk);
+  // Mengintip sebagian isi file tanpa menarik seluruhnya (read-only).
+  // Dibatasi 64 KiB per panggilan; ikut guard yang sama dengan Pull.
+  rpc Preview(PreviewRequest) returns (PreviewResponse);
 }
 
 // Permintaan penarikan satu file image.
@@ -34,4 +37,24 @@ message SourceHash {
   string sha256_hex = 1;
   // Ukuran total file dalam byte.
   uint64 total_bytes = 2;
+}
+
+// Permintaan intip sebagian isi file.
+message PreviewRequest {
+  // Path file image di sisi sumber.
+  string path = 1;
+  // Offset byte awal.
+  uint64 offset = 2;
+  // Jumlah byte diminta; 0 = default 4096, maks 65536.
+  uint32 limit = 3;
+}
+
+// Potongan isi file untuk pratinjau.
+message PreviewResponse {
+  // Offset byte awal data ini (gema request).
+  uint64 offset = 1;
+  // Isi potongan (bisa lebih pendek dari limit di ujung file).
+  bytes data = 2;
+  // Ukuran total file dalam byte.
+  uint64 total_bytes = 3;
 }
