@@ -123,7 +123,7 @@ export default function PullForm({ busy, serverError, onStart }: Props) {
                   id="src"
                   value={customPath}
                   onChange={(e) => setCustomPath(e.target.value)}
-                  placeholder="testdata/disk01.dd"
+                  placeholder="testdata/dev.dd (seed make dev)"
                   autoComplete="off"
                 />
               ) : (
